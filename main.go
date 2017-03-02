@@ -24,15 +24,20 @@ import (
 )
 
 var (
-	pkgs     = make(map[string][]string)
-	matchvar = flag.String("match", ".*", "filter packages")
-	stdout   = flag.Bool("stdout", false, "print to standard output instead of browser")
-	pkgmatch *regexp.Regexp
+	pkgs       = make(map[string][]string)
+	matchvar   = flag.String("match", ".*", "filter packages")
+	excludevar = flag.String("exclude", "", "exclude packages separated by comma")
+	stdout     = flag.Bool("stdout", false, "print to standard output instead of browser")
+	pkgmatch   *regexp.Regexp
+	excludes   = map[string]string{}
 )
 
 func findImport(p string) {
 	if !pkgmatch.MatchString(p) {
 		// doesn't match the filter, skip it
+		return
+	}
+	if _, ok := excludes[p]; ok {
 		return
 	}
 	if p == "C" {
@@ -60,6 +65,9 @@ func findImport(p string) {
 func filter(s []string) []string {
 	var r []string
 	for _, v := range s {
+		if _, ok := excludes[v]; ok {
+			continue
+		}
 		if pkgmatch.MatchString(v) {
 			r = append(r, v)
 		}
@@ -76,7 +84,7 @@ func allKeys() []string {
 		}
 	}
 	v := make([]string, 0, len(keys))
-	for k, _ := range keys {
+	for k := range keys {
 		v = append(v, k)
 	}
 	return v
@@ -93,6 +101,9 @@ func keys() map[string]int {
 func init() {
 	flag.Parse()
 	pkgmatch = regexp.MustCompile(*matchvar)
+	for _, exclude := range strings.Split(*excludevar, ",") {
+		excludes[exclude] = exclude
+	}
 }
 
 func check(err error) {
