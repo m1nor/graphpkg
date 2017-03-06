@@ -28,6 +28,7 @@ var (
 	matchvar   = flag.String("match", ".*", "filter packages")
 	excludevar = flag.String("exclude", "", "exclude packages separated by comma")
 	stdout     = flag.Bool("stdout", false, "print to standard output instead of browser")
+	trimPrefix = flag.String("trim", "", "prefix to remove from package name")
 	pkgmatch   *regexp.Regexp
 	excludes   = map[string]string{}
 )
@@ -126,6 +127,7 @@ func main() {
 	fmt.Fprintf(in, "digraph {\n")
 	keys := keys()
 	for p, i := range keys {
+		p = strings.TrimPrefix(p, *trimPrefix)
 		fmt.Fprintf(in, "\tN%d [label=%q,shape=box];\n", i, p)
 	}
 	for k, v := range pkgs {
